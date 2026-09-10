@@ -20,23 +20,6 @@ export class WeaponButton{
     });
   }
 
-  setupControls(){
-    /*window.addEventListener("mousedown",(event)=>{
-      let rect=document.querySelector("canvas").getBoundingClientRect();
-        let distance=Math.hypot((event.clientX-rect.left)-this.weaponButtonX,
-        (event.clientY-rect.top)-this.weaponButtonY);
-        if(distance<=this.radius){
-          this.pressed=true;
-          this.press();
-        }
-      }
-    );
-    window.addEventListener("mouseup",()=>{
-      this.pressed=false;
-      this.release();
-    });*/
-  }
-
   containsPoint(x,y){
     const distance=Math.hypot(
       x-this.weaponButtonX,
@@ -59,15 +42,51 @@ export class WeaponButton{
     }
   }
 
-  
+  setupControls(){
+    const canvas=document.querySelector("canvas");
+    canvas.addEventListener("mousedown",(event)=>{
+      const rect=canvas.getBoundingClientRect();
+      const x=event.clientX-rect.left;
+      const y=event.clientY-rect.top;
+      if(this.containsPoint(x,y)){
+        this.press("mouse");
+      }
+    });
+    canvas.addEventListener("mouseup",()=>{
+      this.release("mouse");
+    });
+    canvas.addEventListener("touchstart",(event)=>{
+      for(const touch of event.changedTouches){
+        const rect=canvas.getBoundingClientRect();
+        const x=touch.clientX-rect.left;
+        const y=touch.clientY-rect.top;
+        if(this.containsPoint(x,y)){
+          event.preventDefault();
+          this.press(touch.identifier);
+          break;
+        }
+      }
+    },{passive:false});
+    canvas.addEventListener("touchend",(event)=>{
+      for(const touch of event.changedTouches){
+        if(this.touchId===touch.identifier){
+          event.preventDefault();
+          this.release(touch.identifier);
+          break;
+        }
+      }
+    },{passive:false});
+    canvas.addEventListener("touchcancel",(event)=>{
+      for(const touch of event.changedTouches){
+        if(this.touchId===touch.identifier){
+          this.release(touch.identifier);
+          break;
+        }
+      }
+    },{passive:false});   
+  }
+
   resize(){
-    let bottomOffset=40;
-    if(window.innerWidth<600){
-      bottomOffset=100;
-    };
-    if(window.innerWidth<600){
-      bottomOffset=100;
-    }
     const scale=Math.min(window.innerWidth/400,1.4);
     this.radius=20*scale;
     this.weaponButtonX=window.innerWidth-this.radius-45;
@@ -75,7 +94,7 @@ export class WeaponButton{
   }
 
   render(context,x,y,radius){
-   this.radius=this.pressed?50:25;
+   const visualRadius=this.pressed?50:25;
     context.save();
     context.shadowBlur=this.pressed?40:20;
     context.shadowColor="#00ffff";
@@ -83,7 +102,7 @@ export class WeaponButton{
     context.beginPath();
     context.arc(
       this.weaponButtonX,this.weaponButtonY,
-      this.radius+10,0,
+      visualRadius+10,0,
       Math.PI*2
     );
     context.fillStyle=this.pressed?"#00bfff":"rgba(0,255,255,0.25)";

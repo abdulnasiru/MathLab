@@ -96,9 +96,6 @@ if(input.keys["KeyW"]||input.keys["ArrowUp"] || input.touch.up || moveY<-0.2){
     const thrustPower=0.15;
     this.velocity.x+=Math.cos(this.rotation)*thrustPower;
     this.velocity.y+=Math.sin(this.rotation)*thrustPower;
-
-   // this.velocity.x*=this.friction;
-    //this.velocity.y*=this.friction;
     this.position.add(this.velocity);
     this.velocity.multiply(0.99);
     
@@ -135,16 +132,6 @@ if(this.fireCooldown>0){
       else if(this.currentWeapon==="TWIN"){
         this.fireTwinCannons();
       }
-
-    /*const bullet=new Bullet(
-    this.position.x+Math.cos(this.rotation)*30,
-    this.position.y+Math.sin(this.rotation)*30,
-    this.rotation
-  );
-  this.game.add(bullet);
-  this.fireCooldown=this.fireRate;
-  this.game.audio.play("laser");
-}*/
     }
 if(input.keys["KeyT"]){
   this.fireTwinCannons();

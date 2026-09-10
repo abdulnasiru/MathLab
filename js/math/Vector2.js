@@ -16,7 +16,7 @@ export class Vector2{
     return this;
   }
 
-  multiply(number){
+ multiply(number){
       this.x*=number;
       this.y*=number;
       return this;

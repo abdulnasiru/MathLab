@@ -1,0 +1,9 @@
+{
+  "name":"MathLab Engine",
+  "short_name":"MathLab",
+  "start_url":"./",
+  "display":"fullScreen",
+  "orientation":"landscape",
+  "background_color":"#000000",
+  "theme_color":"#000000"
+}

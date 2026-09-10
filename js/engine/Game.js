@@ -19,7 +19,7 @@ import { FireButton } from "../input/FireButton.js";
 import { Vector2 } from "../math/Vector2.js";
 import { PulseButton } from "../input/PulseButton.js";
 import { isTouchDevice } from "../utils/Device.js";
-import { WeaponButton } from "../input/WeaponButton.js";
+import { WeaponButton } from "../input/weaponButton.js";
 
 export class Game{
   constructor(canvas){
@@ -253,7 +253,6 @@ export class Game{
     this.joystick.update();
     this.fireButton.update();
     this.pulseButton.update();
-    //this.weaponButton.update();
     }
 
     if(this.waveMessageTimer>0){
@@ -404,8 +403,8 @@ export class Game{
     this
 );
    this.ship=ship;
+   this.weaponButton.ship=ship;
    this.add(ship);
-
    this.camera.follow(ship);
    this.asteroidField=new AsteroidField(this);
 
@@ -555,20 +554,6 @@ export class Game{
       x,y,width*(this.ship.pulseEnergy/this.ship.maxPulseEnergy),
       height
     );
-    /*context.fillStyle="white";
-    context.font=`${pulseSize}px Arial`;
-    context.fillText(
-      "PULSE CORE",x+20,y-12
-    );
-    const pulseAmount=this.ship.pulseEnergy/this.ship.maxPulseEnergy;
-    if(pulseAmount<0.25){
-      context.fillStyle="#ff3030";
-      context.shadowBlur=20;
-      context.shadowColor="#ff3030";
-      context.fillText(
-        "LOW ENERGY",40,185
-      );
-    }*/
     let readySize=window.innerWidth<600?10:12;
     context.fillStyle="white";
     context.font=`${readySize}px Arial`;
@@ -577,13 +562,6 @@ export class Game{
     context.fillText(
       status,200,157
     );
-    /*let onlineSize=window.innerWidth<600?10:12;
-    context.shadowBlur=0;
-    context.fillStyle="#00ff88";
-    context.font=`${onlineSize}px Arial`;
-    context.fillText(
-      "ENGINE ONLINE",40,175
-    );*/
   }
 
   render(context,camera){

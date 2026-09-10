@@ -4,13 +4,98 @@
   box-sizing: border-box;
 }
 
-body{
+html,body{
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background: #000;
 }
+body{
+  position: relative;
+}
 
-canvas{
+#gameCanvas{
   display: block;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+#orientationOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 30px;
+  background: radial-gradient(
+    circle at center,#111a38 0%,
+    #070b1d 55%,#02030b 100%
+  );
+  color:white;
+}
+
+@media screen and (orientation: portrait) and (max-width:900px){
+  #orientationOverlay{
+    display: flex;
+  }
+  #gameCanvas{
+    visibility: hidden;
+  }
+  .orientationContent{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 30px;
+  }
+  .rotateIcon{
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(0,240,255,0.7);
+    border-radius: 24px;
+    font-size: 48px;
+    color: #00f6ff;
+    box-shadow: 0 0 15px rgba(240,255,0.4),
+                0 0 45px rgba(0,240,255,0.15);
+                animation: rotateHint 2.2s ease-in-out infinite;
+  }
+  #orientationContent h1{
+  font-size: clamp(28px,6vw,46px);
+  margin: 10px 0 0;
+  letter-spacing: 4px;
+}
+#orientationContent p{
+  margin: 0;
+  font-size: clamp(20px,4vw,30px);
+}
+
+#orientationContent span{
+  max-width: 320px;
+  letter-spacing: 2px;
+  margin-top: 5px;
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+}
+
+
+@keyframes rotateHint{
+  0%{
+    transform: rotate(0deg);
+  }
+  50%{
+    transform: rotate(90deg);
+  }
+  100%{
+    transform: rotate(0deg);
+  }
 }

@@ -1,7 +1,6 @@
 import { MenuStar } from "./MenuStar.js";
 import { ShootingStar } from "./ShootingStar.js";
 import { MenuShip } from "../entities/MenuShip.js";
-
 export class Menu{
   constructor(game){
     this.game=game;
@@ -44,6 +43,9 @@ export class Menu{
     this.buttonPulse=0;
     this.buttonScale=1;
     this.ship=new MenuShip(game);
+    window.addEventListener("resize",()=>{
+      this.resize();
+    })
     this.resize();
 
   }
@@ -51,12 +53,18 @@ export class Menu{
   resize(){
     const width=this.game.canvas.width;
     const height=this.game.canvas.height;
-    this.titleY=height*0.25;
-    this.shipX=width/2;
-    this.shipY=height*0.45;
-    this.buttonY=height*0.72;
+    const isMobile=height>width || width<600;
+    const centerX=width/2;
+    this.titleY=isMobile ? height*0.15:height*0.18;
+    this.subtitleY=isMobile?height*0.25:height*0.29;
+    this.shipX=centerX;
+    this.shipY=isMobile?height*0.38:height*0.39;
+    this.startButton.width=Math.sin(width*0.55,300);
+    this.startButton.height=isMobile?64:76;
+    this.startButton.x=centerX-this.startButton.width/2;
+    this.startButton.y=isMobile?height*0.54:height*0.55;
+    this.footerY=height*0.92;
   }
-
   
   update(){
     for(const star of this.stars){
@@ -73,9 +81,7 @@ export class Menu{
   this.ship.update();
 
     let button=this.startButton;
-    if(this.clicked && this.mouse.x>button.x && this.mouse.x<button.x + button.width &&
-      this.mouse.y>button.y && this.mouse.y<button.y +button.height
-    ){
+    if(this.clicked && this.checkButton(this.mouse.x,this.mouse.y)){
       this.game.startGame();
       this.clicked=false;
     }
@@ -96,19 +102,13 @@ export class Menu{
   }
 
   render(context,camera){
-    const width=context.canvas.width;
-    const height=context.canvas.height;
+    const width=this.game.canvas.width;
+    const height=this.game.canvas.height;
     const centerX=width/2;
-    const centerY=height/2;
-    const isMobile=height>width || width<600;
-    const titleY=isMobile
-    ?height*0.18:height*0.22;
-    const subtitleY=isMobile
-    ?height*0.30:height*0.34;
-    const buttonY=isMobile
-    ?height*0.50:height*0.48;
-    const footerY=isMobile
-    ?height*0.90:height*0.92;
+    const titleY=this.titleY;
+    const subtitleY=this.subtitleY;
+    const buttonY=this.startButton.y;
+    const footerY=this.footerY;
     const scale=Math.min(width/1200,height/800);
     this.ship.x=centerX;
     this.ship.y=buttonY-60;

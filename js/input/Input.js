@@ -13,7 +13,6 @@ export class Input{
     fire:false,
 
   };
-  //this.weaponSwitch=false;
 
 window.addEventListener("keydown",(event)=>{
   this.keys[event.code]=true;
