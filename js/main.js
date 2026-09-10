@@ -1,11 +1,11 @@
 let landscapeRequested=false;
 async function requestLandscape(){
   if(landscapeRequested) return;
+  landscapeRequested=true;
   try{
     if(screen.orientation && screen.orientation.lock){
       await screen.orientation.lock("landscape");
     }
-    landscapeRequested=true;
   }
   catch(error){
     console.log("Landscape mode request unavailable:", error);
