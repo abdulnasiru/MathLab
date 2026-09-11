@@ -19,7 +19,7 @@ import { FireButton } from "../input/FireButton.js";
 import { Vector2 } from "../math/Vector2.js";
 import { PulseButton } from "../input/PulseButton.js";
 import { isTouchDevice } from "../utils/Device.js";
-import { WeaponButton } from "../input/weaponButton.js";
+import { WeaponButton } from "../input/WeaponButton.js";
 
 export class Game{
   constructor(canvas){
