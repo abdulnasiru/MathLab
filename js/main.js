@@ -1,10 +1,11 @@
 let landscapeRequested=false;
+
 async function requestLandscape(){
   if(landscapeRequested) return;
-  landscapeRequested=true;
   try{
     if(screen.orientation && screen.orientation.lock){
       await screen.orientation.lock("landscape");
+      landscapeRequested=true;
     }
   }
   catch(error){
@@ -25,27 +26,24 @@ import { AsteroidField } from "./world/AsteroidField.js";
 const canvas=document.getElementById("gameCanvas");
 const orientationOverlay=document.getElementById("orientationOverlay");
 
+let fullscreenRequested=false;
+
 async function enterFullscreen(){
+  if(fullscreenRequested){ return;}
   try{
-    if(!document.fullscreenElement){
-      if(document.documentElement.requestFullscreen){
+    if(!document.fullscreenElement && document.documentElement.requestFullscreen){
         await document.documentElement.requestFullscreen();
-      }
     }
+    fullscreenRequested=true;
   }
   catch(error){
     console.log("Fullscreen unavailable:", error);
   }
-  try{
-    if(screen.orientation && screen.orientation.lock){
-      await screen.orientation.lock("landscape")
-    }
-  }
-  catch(error){
-    console.log("Landscape lock unavailable:", error);
-  }
+  await requestLandscape();
   resizeCanvas();
 }
+
+window.enterMathLabFullscreen=enterFullscreen;
 
 function exitMathLabFullscreen(){
   if(document.fullscreenElement){
@@ -59,10 +57,13 @@ document.addEventListener("fullscreenchange", ()=>{
 function isLandscape(){
   return window.innerWidth>window.innerHeight;
 }
+
 function resizeCanvas(){
   if(!isLandscape()) return;
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+  const width=window.innerWidth;
+  const height=window.innerHeight;
+  canvas.width=width;
+  canvas.height=height;
 }
 resizeCanvas();
 
@@ -133,5 +134,4 @@ window.addEventListener("resize",()=>{
   resizeCanvas();
 });
 window.addEventListener("orientationchange",waitForLandscape);
-requestLandscape();
 waitForLandscape();
