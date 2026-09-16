@@ -44,6 +44,36 @@ body{
   color:white;
 }
 
+#orientationFullscreenButton{
+  display: none;
+  margin-top: 28px;
+  padding: 15px 30px;
+  border: 2px solid #00ffff;
+  border-radius: 14px;
+  background: #112244;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00ffff,
+     0 0 25px rgba(0,255,255,0.45);
+  transition: transform 0.2s ease,
+     background 0.2s ease,
+     box-shadow 0.2s ease;
+}
+
+#orientationFullscreenButton:hover{
+  background: #173b68;
+  transform: scale(1.04);
+  box-shadow: 0 0 15px #00ffff,
+      0 0 35px rgba(0,255,255,0.65);
+}
+
+#orientationFullscreenButton:active{
+  transform: scale(0.96);
+}
+
 @media screen and (orientation: portrait) and (max-width:900px){
   #orientationOverlay{
     display: flex;
@@ -55,6 +85,8 @@ body{
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-align: center;
     gap: 10px;
     padding: 30px;
   }
@@ -69,8 +101,8 @@ body{
     font-size: 48px;
     color: #00f6ff;
     box-shadow: 0 0 15px rgba(240,255,0.4),
-                0 0 45px rgba(0,240,255,0.15);
-                animation: rotateHint 2.2s ease-in-out infinite;
+        0 0 45px rgba(0,240,255,0.15);
+    animation: rotateHint 2.2s ease-in-out infinite;
   }
   #orientationContent h1{
   font-size: clamp(28px,6vw,46px);
@@ -90,9 +122,7 @@ body{
   line-height: 1.5;
   opacity: 0.65;
 }
-
 }
-
 
 @keyframes rotateHint{
   0%{

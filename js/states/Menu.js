@@ -42,12 +42,6 @@ export class Menu{
       width:54,
       height:54
     };
-    this.fullscreenButton={
-      x:0,
-      y:0,
-      width:230,
-      height:50
-    };
     this.helpOpen=false;
     this.touchStart=false;
     this.clicked=false;
@@ -64,23 +58,15 @@ export class Menu{
           this.helpOpen=!this.helpOpen;
           return;
         }
-        if(this.helpOpen){return;}
+        if(this.helpOpen){
+          return;
+        }
         if(this.isInsideButton(this.startButton,x,y)){
-          if(window.enterMathLabFullscreen){
-            window.enterMathLabFullscreen();
-          }
           this.game.startGame();
           return;
         }
-        if(this.isInsideButton(
-          this.fullscreenButton,x,y
-        )){
-          if(window.enterMathLabFullscreen){
-            window.enterMathLabFullscreen();
-          }
-          return;
-        }
         });
+    this.enterWasPressed=false;
     this.backgroundOffset=0;
     this.buttonPulse=0;
     this.buttonScale=1;
@@ -91,117 +77,89 @@ export class Menu{
     this.resize();
   }
 
-resize() {
-  const width = this.game.canvas.width;
-  const height = this.game.canvas.height;
-  if (width < 700 || height < 600) {
+resize(){
+  const width=this.game.canvas.width;
+  const height=this.game.canvas.height;
+  if(width<700 || height<600) {
     this.resizeSmallScreen();
-  } else {
+  } 
+  else{
     this.resizeDesktop();
   }
   this.resizeHelpPanel();
 }
 
-resizeSmallScreen() {
-  const width = this.game.canvas.width;
-  const height = this.game.canvas.height;
-  const centerX = width / 2;
-  this.titleY = height * 0.16;
-  this.subtitleY = height * 0.30;
-  this.shipX = centerX;
-  this.shipY = height * 0.42;
-  this.startButton.width = Math.min(width * 0.62, 300);
-  this.startButton.height = Math.max(48, height * 0.14);
-  this.startButton.x =
-    centerX - this.startButton.width / 2;
-  this.startButton.y = height * 0.53;
-  this.fullscreenButton.width =
-    Math.min(width * 0.42, 220);
-  this.fullscreenButton.height =
-    Math.max(38, height * 0.10);
-  this.fullscreenButton.x =
-    centerX - this.fullscreenButton.width / 2;
-  this.fullscreenButton.y =
-    this.startButton.y +
-    this.startButton.height +
-    12;
-  this.footerY = height - 18;
-  this.helpButton.width = 64;
-  this.helpButton.height = 64;
-  this.helpButton.x = 18;
-  this.helpButton.y = 18;
-}
-
-resizeDesktop() {
-  const width = this.game.canvas.width;
-  const height = this.game.canvas.height;
-  const centerX = width / 2;
-  this.titleY = height * 0.18;
-  this.subtitleY = height * 0.29;
+resizeSmallScreen(){
+  const width=this.game.canvas.width;
+  const height=this.game.canvas.height;
+  const centerX=width/2;
+  this.titleY=height*0.16;
+  this.subtitleY=height*0.30;
   this.shipX=centerX;
-  this.shipY=height * 0.39;
-  this.startButton.width = Math.min(width * 0.55, 320);
-  this.startButton.height = 76;
-  this.startButton.x =
-    centerX - this.startButton.width / 2;
-  this.startButton.y = height * 0.55;
-  this.fullscreenButton.width = 230;
-  this.fullscreenButton.height = 50;
-  this.fullscreenButton.x =
-    centerX - this.fullscreenButton.width / 2;
-  this.fullscreenButton.y =
-    this.startButton.y +
-    this.startButton.height +
-    24;
-  this.footerY = height - 24;
-  this.helpButton.width = 64;
-  this.helpButton.height = 64;
-  this.helpButton.x = width - 82;
-  this.helpButton.y = 18;
+  this.shipY=height*0.42;
+  this.startButton.width=Math.min(width*0.62, 300);
+  this.startButton.height=Math.max(38, height*0.14);
+  this.startButton.x=centerX-this.startButton.width/2;
+  this.startButton.y=height*0.53;
+  this.footerY=height-18;
+  this.helpButton.width=64;
+  this.helpButton.height=60;
+  this.helpButton.x=18;
+  this.helpButton.y=18;
 }
 
-resizeHelpPanel() {
-  const width = this.game.canvas.width;
-  const height = this.game.canvas.height;
-  const isSmallScreen =
-    width < 700 || height < 600;
+resizeDesktop(){
+  const width=this.game.canvas.width;
+  const height=this.game.canvas.height;
+  const centerX=width/2;
+  this.titleY=height*0.18;
+  this.subtitleY=height*0.29;
+  this.shipX=centerX;
+  this.shipY=height*0.39;
+  this.startButton.width=Math.min(width*0.55,320);
+  this.startButton.height=76;
+  this.startButton.x=centerX-this.startButton.width/2;
+  this.startButton.y=height*0.55;
+  this.footerY=height-24;
+  this.helpButton.width=64;
+  this.helpButton.height=64;
+  this.helpButton.x=width-82;
+  this.helpButton.y=18;
+}
+
+resizeHelpPanel(){
+  const width=this.game.canvas.width;
+  const height=this.game.canvas.height;
+  const isSmallScreen=width<700 || height<600;
   if (isSmallScreen) {
-    this.helpPanel.width = Math.min(width * 0.86, 560);
-    this.helpPanel.height = Math.min(height * 0.88, 500);
-    this.helpPanel.x =
-      (width - this.helpPanel.width) / 2;
-    this.helpPanel.y =
-      (height - this.helpPanel.height) / 2;
-    this.helpPanel.titleSize = Math.max(
-      22,
-      Math.min(width * 0.055, 34)
+    this.helpPanel.width=Math.min(width * 0.86, 560);
+    this.helpPanel.height=Math.min(height * 0.88, 500);
+    this.helpPanel.x=(width-this.helpPanel.width)/2;
+    this.helpPanel.y=(height-this.helpPanel.height)/2;
+    this.helpPanel.titleSize=Math.max(22,
+      Math.min(width*0.055, 34)
     );
-    this.helpPanel.keySize = Math.max(
-      17,
-      Math.min(width * 0.045, 25)
+    this.helpPanel.keySize=Math.max(17,
+      Math.min(width*0.045, 25)
     );
-    this.helpPanel.descriptionSize = Math.max(
-      15,
-      Math.min(width * 0.040, 22)
+    this.helpPanel.descriptionSize=Math.max(15,
+      Math.min(width*0.040, 22)
     );
-    this.helpPanel.rowSpacing = Math.max(
-      34,
-      Math.min(height * 0.105, 48)
+    this.helpPanel.rowSpacing=Math.max(34,
+      Math.min(height*0.105, 48)
     );
-    this.helpPanel.padding = 24;
+    this.helpPanel.padding=24;
   }
    else {
-    this.helpPanel.width = 560;
-    this.helpPanel.height = 600;
-    this.helpPanel.x =
-      (width - this.helpPanel.width) / 2;
-    this.helpPanel.y =
-      (height - this.helpPanel.height) / 2;
-    this.helpPanel.titleSize = 34;
-    this.helpPanel.keySize = 25;
-    this.helpPanel.descriptionSize = 22;
-    this.helpPanel.rowSpacing = 48;
-    this.helpPanel.padding = 34;
+    this.helpPanel.width=560;
+    this.helpPanel.height=600;
+    this.helpPanel.x=(width-this.helpPanel.width)/2;
+    this.helpPanel.y=(height-this.helpPanel.height)/2;
+    this.helpPanel.titleSize=34;
+    this.helpPanel.keySize=25;
+    this.helpPanel.descriptionSize=22;
+    this.helpPanel.rowSpacing=48;
+    this.helpPanel.padding=34;
   }
   this.helpPanel.width=Math.min(this.helpPanel.width,width-24);
   this.helpPanel.height=Math.min(this.helpPanel.height,height-24);
@@ -220,19 +178,23 @@ resizeHelpPanel() {
     shooting.update();
   }
   this.ship.update();
-  if(this.game.input.keys["Enter"] || this.game.input.keys["NumpadEnter"]){
-    if(window.enterMathLabFullscreen){
-      window.enterMathLabFullscreen();
-    }
+  if(this.clicked && this.isInsideButton(
+    this.startButton,this.mouse.x,this.mouse.y)){
+    this.game.startGame();
+    this.clicked=false;
+  }
+  const enterPressed=this.game.input.keys["Enter"] || this.game.input.keys["NumpadEnter"]
+  if(enterPressed && !this.enterWasPressed){
     this.game.startGame();
   }
+  this.enterWasPressed=enterPressed;
   }
 
   isInsideButton(button,x,y){
-    const inside= x>=button.x && 
-    x<=button.x + button.width && 
+    const inside=x>=button.x && 
+    x<=button.x+button.width && 
       y>=button.y && 
-      y<=button.y + button.height;
+      y<=button.y+button.height;
       return inside;
   }
 
@@ -353,7 +315,7 @@ renderHelpPanel(context){
   context.fillStyle="#9fb5d1";
   context.font=`${isMobile?14:18}px Arial`;
   context.fillText("Tap menu to close",
-    panel.x+panel.width/2,panel.y+panel.height-28
+    panel.x+panel.width/2,panel.y+panel.height-16
   );
   context.restore();
 }
@@ -434,14 +396,6 @@ renderHelpPanel(context){
       }
     );
     context.restore();
-    this.drawButton(
-      context,this.fullscreenButton,"ENTER FULLSCREEN",{
-        fontSize:Math.min(width*0.035,18),
-        borderRadius:18,
-        fillStyle:"#0b1830",
-        strokeStyle:"#5577aa"
-      }
-    );
     context.save();
     context.textAlign="center";
     context.textBaseline="middle";

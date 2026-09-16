@@ -5,7 +5,7 @@ export class FireButton{
       bottomOffset=100;
     }
     const scale=Math.min(window.innerWidth/400,1.4);
-    this.radius=40*scale;
+    this.radius=10*scale;
     const margin=window.innerWidth<600?25:40;
     const bottom=window.innerHeight-margin;
     this.x=window.innerWidth-this.radius-margin;
@@ -43,7 +43,7 @@ export class FireButton{
       bottomOffset=100;
     }
     const scale=Math.min(window.innerWidth/400,1.4);
-    this.radius=40*scale;
+    this.radius=20*scale;
     const margin=window.innerWidth<600?25:40;
     const bottom=window.innerHeight-margin;
     this.x=window.innerWidth-this.radius-margin;

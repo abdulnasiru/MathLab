@@ -5,8 +5,8 @@ export class Joystick{
       bottomOffset=100;
     }
     const margin=window.innerWidth<700?25:40;
-    const scale=Math.min(window.innerWidth/400,1.4);
-    this.radius=40*scale;
+    const scale=Math.min(window.innerWidth/300,1.4);
+    this.radius=20*scale;
     this.baseX=this.radius+margin;
     this.baseY=window.innerHeight-this.radius-bottomOffset;
     this.knobX=this.baseX;
@@ -78,7 +78,7 @@ export class Joystick{
       bottomOffset=100;
     }
     const scale=Math.min(window.innerWidth/400,1.4);
-    this.radius=40*scale;
+    this.radius=30*scale;
     const margin=window.innerWidth<700?25:40;
     this.baseX=this.radius+margin;
     this.baseY=window.innerHeight-this.radius-bottomOffset;

@@ -25,25 +25,92 @@ import { AsteroidField } from "./world/AsteroidField.js";
 
 const canvas=document.getElementById("gameCanvas");
 const orientationOverlay=document.getElementById("orientationOverlay");
+const orientationTitle=document.getElementById("orientationTitle");
+const orientationMessage=document.getElementById("orientationMessage");
+const orientationSubmessage=document.getElementById("orientationSubmessage");
+const orientationFullscreenButton=document.getElementById("orientationFullscreenButton");
 
+function updateOrientationScreen(){
+  const isLandscape=window.matchMedia("(orientation:landscape)").matches;
+  const isFullscreen=!!document.fullscreenElement;
+  if(isFullscreen){
+    orientationOverlay.style.display="none";
+    return;
+  }
+  if(isLandscape){
+    orientationOverlay.style.display="flex";
+    orientationTitle.textContent="MathLab Space";
+    orientationMessage.textContent="Landscape Mode Ready";
+    orientationSubmessage.textContent="Enter fullscreen to continue";
+    orientationFullscreenButton.style.display="block";
+    orientationFullscreenButton.style.visibility="visible";
+    orientationFullscreenButton.style.opacity="1";
+  }
+  else{
+    orientationOverlay.style.display="flex";
+    orientationTitle.textContent="MathLab Space";
+    orientationMessage.textContent="Rotate Your Device";
+    orientationSubmessage.textContent="Landscape mode required";
+    orientationFullscreenButton.style.display="none";
+    orientationFullscreenButton.style.visibility="hidden";
+    orientationFullscreenButton.style.opacity="0";
+  }
+}
+
+let mathLabFullscreenActive=false;
 let fullscreenRequested=false;
 
 async function enterFullscreen(){
   if(fullscreenRequested){ return;}
   try{
-    if(!document.fullscreenElement && document.documentElement.requestFullscreen){
-        await document.documentElement.requestFullscreen();
+    if(!document.fullscreenElement){
+      if(document.documentElement.requestFullscreen){
+        await document.documentElement.requestFullscreen({
+          navigationUI:"hide"
+        });
+    }}
+    if(screen.orientation && screen.orientation.lock){
+      try{
+        await screen.orientation.lock("landscape");
+      }
+      catch(orientationError){
+        console.warn("Landscape lock unavailable:", orientationError);
+      }
     }
     fullscreenRequested=true;
+    mathLabFullscreenActive=true;
   }
   catch(error){
     console.log("Fullscreen unavailable:", error);
   }
   await requestLandscape();
   resizeCanvas();
+  orientationOverlay.style.display="none";
 }
+  
+orientationFullscreenButton.addEventListener("click",()=>{
+  enterFullscreen();
+});
+window.addEventListener("resize",updateOrientationScreen);
+window.addEventListener("orientationchange",updateOrientationScreen);
+document.addEventListener("fullscreenchange",()=>{
+  if(!document.fullscreenElement){
+    fullscreenRequested=false;
+    mathLabFullscreenActive=false;
+    orientationOverlay.style.display="block";
+  updateOrientationScreen();
+  }
+});
+updateOrientationScreen();
 
 window.enterMathLabFullscreen=enterFullscreen;
+document.addEventListener("fullscreenchange",()=>{
+  if(!document.fullscreenElement){
+    fullscreenRequested=false;
+    orientationOverlay.style.display="block";
+    updateOrientationScreen();
+  }
+});
 
 function exitMathLabFullscreen(){
   if(document.fullscreenElement){

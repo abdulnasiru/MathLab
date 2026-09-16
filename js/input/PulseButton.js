@@ -5,7 +5,7 @@ export class PulseButton{
       bottomOffset=100;
     }
     const scale=Math.min(window.innerWidth/400,1.4);
-    this.radius=40*scale;
+    this.radius=20*scale;
     const spacing=this.radius*2+32;
     const margin=window.innerWidth<600?25:40;
     const bottom=window.innerHeight-this.radius-40;
@@ -48,15 +48,15 @@ export class PulseButton{
   }
 
   resize(){
-    let bottomOffset=40;
+    let bottomOffset=50;
     if(window.innerWidth<600){
       bottomOffset=100;
     }
-    const scale=Math.min(window.innerWidth/400,1.4);
-    this.radius=40*scale;
-    const bottom=window.innerHeight-this.radius-40;
-    const margin=window.innerWidth<600?25:40;
-    const spacing=this.radius*2+32;
+    const scale=Math.min(window.innerWidth/200,1.4);
+    this.radius=10*scale;
+    const bottom=window.innerHeight-this.radius-20;
+    const margin=window.innerWidth<600?50:100;
+    const spacing=this.radius*2+40;
     this.x=window.innerWidth-this.radius-margin-spacing;
     this.y=window.innerHeight-this.radius-bottomOffset;
   }
