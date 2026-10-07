@@ -10,13 +10,19 @@ export class Ship extends GameObject{
   constructor(x,y,game){
     super(x,y);
     this.game=game;
-    this.width=50;
-    this.height=70;
-    this.rotation=-Math.PI/2;
+    this.width=90;
+    this.height=80;
+    this.rotation=0;
     this.enginePower=0.1;
     this.rotationSpeed=0.12;
     this.maxSpeed=15;
     this.velocity=new Vector2(0,0);
+
+    this.bank=0;
+    this.targetBank=0;
+    this.maxBank=Math.PI/10;
+    this.bankSmoothness=0.12;
+
     this.acceleration=0.8;
     this.friction=0.9;
     this.thrusting=false;
@@ -44,6 +50,17 @@ export class Ship extends GameObject{
 
   }
 
+  getForwardVector(){
+    return new Vector2(
+      Math.cos(this.rotation),Math.sin(this.rotation)
+    );
+  }
+  getRightVector(){
+    return new Vector2(
+      -Math.sin(this.rotation),Math.cos(this.rotation)
+    );
+  }
+
   update(input){
     if(this.game.gameOver){
       return;
@@ -62,21 +79,27 @@ export class Ship extends GameObject{
 
       let moveX=input.moveX || 0;
       let moveY=input.moveY || 0;
+      const steering=Math.max(-1,Math.min(1,moveX));
 
-    if(input.keys["KeyA"]||input.keys["ArrowLeft"] || input.touch.left || moveX<-0.2){
+    if(input.keys["KeyA"]||input.keys["ArrowLeft"] ||
+       input.touch.left || moveX<-0.2){
       this.rotation-=this.rotationSpeed;
     }
 
-  if(input.keys["KeyD"]||input.keys["ArrowRight"] || input.touch.right || moveX>0.2){
+  if(input.keys["KeyD"]||input.keys["ArrowRight"] ||
+     input.touch.right || moveX>0.2){
     this.rotation+=this.rotationSpeed;
   }
-
+  this.targetBank=steering*this.maxBank;
+  this.bank+=(this.targetBank-this.bank)*this.bankSmoothness;
 
   this.acceleration=new Vector2(0,0);
   
-if(input.keys["KeyW"]||input.keys["ArrowUp"] || input.touch.up || moveY<-0.2){
-  this.acceleration.x=Math.cos(this.rotation)*this.enginePower;
-  this.acceleration.y=Math.sin(this.rotation)*this.enginePower;
+if(input.keys["KeyW"]||input.keys["ArrowUp"] ||
+   input.touch.up || moveY<-0.2){
+    const forward=this.getForwardVector();
+  this.acceleration.x=forward.x*this.enginePower;
+  this.acceleration.y=forward.y*this.enginePower;
 
   if(Math.random()<0.5){
     let particlePosition=new Vector2(
@@ -90,12 +113,9 @@ if(input.keys["KeyW"]||input.keys["ArrowUp"] || input.touch.up || moveY<-0.2){
     );
     this.game.add(flame);
 
-      let moveX=input.moveX;
-      let moveY=input.moveY;
-
     const thrustPower=0.15;
-    this.velocity.x+=Math.cos(this.rotation)*thrustPower;
-    this.velocity.y+=Math.sin(this.rotation)*thrustPower;
+    this.velocity.x+=forward.x*thrustPower;
+    this.velocity.y+=forward.y*thrustPower;
     this.position.add(this.velocity);
     this.velocity.multiply(0.99);
     
@@ -204,18 +224,16 @@ respawn(){
 }
 
 createEngineParticle(){
-  let backward=this.rotation+Math.PI;
-  let particleVelocity=new Vector2(
-    Math.cos(backward)*3,
-    Math.sin(backward)*3
+  const forward=this.getForwardVector();
+  const backward=new Vector2(-forward.x,-forward.y);
+  const particleVelocity=new Vector2(
+    -backward.x*3,-backward.y*3
   );
-
-  let particlePosition=new Vector2(
-    this.position.x-Math.cos(this.rotation)*25,
-    this.position.y-Math.sin(this.rotation)*25
+  const particlePosition=new Vector2(
+    this.position.x-forward.x*25,
+    this.position.y-forward.y*25
   );
-
-  let particle=new Particle(
+  const particle=new Particle(
     particlePosition.x,
     particlePosition.y,
     particleVelocity,
@@ -242,11 +260,14 @@ die(){
   }
 
   fireTwinCannons(){
-    const leftX=this.position.x-18;
-    const rightX=this.position.x+18;
-    const cannonY=this.position.y-50;
-    const leftBullet=new Bullet(leftX,cannonY,this.rotation);
-    const rightBullet=new Bullet(rightX,cannonY,this.rotation);
+    const forward=this.getForwardVector();
+    const right=this.getRightVector();
+    const leftX=this.position.x+forward.x*45-right.x*18;
+    const leftY=this.position.y+forward.y*45-right.y*18;
+    const rightX=this.position.x+forward.x*45+right.x*18;
+    const rightY=this.position.y+forward.y*45+right.y*18;
+    const leftBullet=new Bullet(leftX,leftY,this.rotation);
+    const rightBullet=new Bullet(rightX,rightY,this.rotation);
     this.game.add(leftBullet);
     this.game.add(rightBullet);
     this.fireCooldown=this.fireRate;
@@ -254,9 +275,10 @@ die(){
   }
 
   firePulse(){
+    const forward=this.getForwardVector();
     const bullet=new Bullet(
-    this.position.x+Math.cos(this.rotation)*30,
-    this.position.y+Math.sin(this.rotation)*30,
+    this.position.x+forward.x*30,
+    this.position.y+forward.y*30,
     this.rotation
     );
     this.game.add(bullet);
@@ -278,20 +300,19 @@ die(){
     if(!this.visible) return;
     let blinking=false;
     if(this.invisibleTimer>0){
-      blinking=Math.floor(this.blinkTimer/10)%2 === 0;
+      blinking=Math.floor(this.blinkTimer/10)%2===0;
     }
     context.save();
     if(blinking){context.globalAlpha=0.3;
     }
 
     const screenPosition=camera.apply(this.position);
-
     context.translate(
       screenPosition.x,
       screenPosition.y
     );
 
-    context.rotate(this.rotation+Math.PI/2);
+    context.rotate(this.rotation+this.bank);
 
     this.renderEngine(context);
     this.renderBody(context);
@@ -300,256 +321,244 @@ die(){
     this.renderCannons(context);
     this.renderGlow(context);
     this.renderFlames(context);
-
     context.restore();
-
-
     if(this.thrusting){
-      this.velocity.x*=0.99;
-      this.velocity.y*=0.99;
       this.game.audio.play("thrust");
     }
-
-      const flame=20+Math.sin(performance.now()*0.03)*6;
-      context.beginPath();
-      context.moveTo(-6,20);
-      context.lineTo(0,flame+20);
-      context.lineTo(6,20);
-      context.closePath();
-      context.fillStyle="orange";
-      context.fill();
     }
 
   renderEngine(context){
+    const engineGlow=10+Math.sin(Date.now()*0.01)*4;
+    context.save();
     context.shadowColor="#00ccff";
-    context.shadowBlur=15;
+    context.shadowBlur=engineGlow;
     context.beginPath();
-    context.moveTo(-6,16);
-    context.lineTo(6,16);
-    context.lineTo(4,22);
-    context.lineTo(-4,22);
-    context.fillStyle="#555";
-    context.closePath();
+    context.roundRect(
+      -34,-18,16,12,4
+    );
+    const engineGradient=context.createLinearGradient(
+      -34,0,-18,0
+    );
+    engineGradient.addColorStop(0,"#222");
+    engineGradient.addColorStop(0.5,"#777");
+    engineGradient.addColorStop(1,"#cfcfcf");
+    context.fillStyle=engineGradient;
     context.fill();
-    context.shadowBlur=0;
+    context.beginPath();
+    context.roundRect(
+      -34,6,16,12,4
+    );
+    context.fillStyle=engineGradient;
+    context.fill();
+    context.restore();
   }
 
   renderBody(context){
+    context.save();
     context.beginPath();
-    context.moveTo(0,-80);
-    context.lineTo(25,25);
-    context.lineTo(12,16);
-    context.lineTo(0,30);
-    context.lineTo(-12,16);
-    context.lineTo(-25,25);
+    context.moveTo(55,0);
+    context.lineTo(22,-18);
+    context.lineTo(-20,-20);
+    context.lineTo(-38,-13);
+    context.lineTo(-42,0);
+    context.lineTo(-38,-13);
+    context.lineTo(-20,20);
+    context.lineTo(22,18);
     context.closePath();
-    const bodyGradient=context.createLinearGradient(-20,0,20,0);
-    bodyGradient.addColorStop(0, "#ffffff");
-    bodyGradient.addColorStop(0.45, "#d8d8d8");
-    bodyGradient.addColorStop(0.7, "#808080");
-    bodyGradient.addColorStop(1,"#4f4f4f");
+    const bodyGradient=context.createLinearGradient(-40,-20,55,20);
+    bodyGradient.addColorStop(0, "#555");
+    bodyGradient.addColorStop(0.25, "#bcbcbc");
+    bodyGradient.addColorStop(0.55, "#ffffff");
+    bodyGradient.addColorStop(0.8,"#d8d8d8");
+    bodyGradient.addColorStop(1,"#666");
     context.fillStyle=bodyGradient;
-    context.strokeStyle="rgba(255,255,255,0.7)";
-    context.lineWidth=1;
+    context.shadowColor="rgba(80,200,255,0.35)";
+    context.shadowBlur=10;
     context.fill();
+    context.strokeStyle="rgba(255,255,255,0.7)";
+    context.lineWidth=1.5;
+    context.stroke();
+    context.shadowBlur=0;
+    context.beginPath();
+    context.moveTo(-30,0);
+    context.lineTo(42,0);
+    context.strokeStyle="rgba(255,255,255,0.35)";
+    context.lineWidth=1;
     context.stroke();
     context.beginPath();
-    context.moveTo(-8,-15);
-    context.lineTo(-3,18);
+    context.moveTo(45,0);
+    context.lineTo(25,-8);
     context.strokeStyle="rgba(255,255,255,0.8)";
     context.lineWidth=2;
     context.stroke();
-    context.beginPath();
-    context.moveTo(10,-60);
-    context.lineTo(10,18);
-    context.strokeStyle="rgba(0,0,0,0.25)";
-    context.lineWidth=2;
-    context.stroke();
-    context.beginPath();
-    context.arc(0,-76,2,0,Math.PI*2);
-    context.fillStyle="white";
-    context.shadowBlur=10;
-    context.shadowColor="white";
-    context.fill();
-    context.shadowBlur=0;
+    context.restore();
   }
 
   renderCockpit(context){
+    context.save();
     context.beginPath();
     context.ellipse(
-      0,-10,8,14,0,0,Math.PI*2
+      15,0,17,11,0,0,Math.PI*2
     );
-    const cockpitGradient=context.createRadialGradient(0,-10,1,0,-10,10);
-    cockpitGradient.addColorStop(0, "#dff8ff");
-    cockpitGradient.addColorStop(0.4, "#6fd7ff");
-    cockpitGradient.addColorStop(1, "#0b6db0");
+    const cockpitGradient=context.createRadialGradient(10,-3,1,15,0,18);
+    cockpitGradient.addColorStop(0, "#eaffff");
+    cockpitGradient.addColorStop(0.35, "#69e6ff");
+    cockpitGradient.addColorStop(0.75,"#168ed0")
+    cockpitGradient.addColorStop(1, "#063b70");
     context.fillStyle=cockpitGradient;
+    context.shadowColor="#44ddff";
+    context.shadowBlur=12;
     context.fill();
-    context.strokeStyle="rgba(255,255,255,0.45)";
+    context.strokeStyle="rgba(255,255,255,0.65)";
     context.lineWidth=1.5;
     context.stroke();
     context.beginPath();
     context.ellipse(
-      -2,-15,2,6,Math.PI/6,0,Math.PI*2
+      10,-4,4,2,-0.3,0,Math.PI*2
     );
-    context.fillStyle="rgba(255,255,255,0.65)";
+    context.fillStyle="rgba(255,255,255,0.75)";
     context.fill();
-    context.beginPath();
-    context.arc(0,-10,3,0,Math.PI*2);
-    context.shadowBlur=12,
-    context.shadowColor="#66ffff"
-    context.fillStyle="#bbffff";
-    context.fill();
-    context.shadowBlur=0;
     const pulse=(Math.sin(Date.now()*0.006)+1)/2;
-    context.shadowBlur=8+pulse*10;
+    context.beginPath();
+    context.arc(15,0,3+pulse*1.5,0,Math.PI*2);
     context.fillStyle=`rgba(220,255,255,${0.7+pulse*0.3})`;
-    const scan=Math.sin(Date.now()*0.01)*5;
-    context.beginPath();
-    context.moveTo(-5,-10+scan);
-    context.lineTo(5,-10+scan);
-    context.strokeStyle="rgba(120,255,255,0.45)";
-    context.lineWidth=1;
-    context.stroke();
-    context.beginPath();
-    context.arc(
-      -2,-3,0.8,0,Math.PI*2
-    );
-    context.fillStyle="#00ff66";
+    context.shadowColor="#66ffff";
+    context.shadowBlur=10+pulse*8;
     context.fill();
-    context.beginPath();
-    context.arc(
-      2,-3,0.8,0,Math.PI*2
-
-    );
-    context.fillStyle="#ff4444";
-    context.fill();
+    context.restore();
   }
 
-
   renderWings(context){
-    context.shadowBlur=12;
+    context.save();
+    context.shadowColor="#55ccff";
+    context.shadowBlur=8;
     context.beginPath();
-    context.moveTo(-18,8);
-    context.lineTo(-45,28);
-    context.lineTo(-32,34);
-    context.lineTo(-10,18);
+    context.moveTo(10,-12);
+    context.lineTo(-12,-30);
+    context.lineTo(-40,-38);
+    context.lineTo(-28,-12);
+    context.lineTo(5,-5);
     context.closePath();
-    context.strokeStyle="#555";
-    context.lineWidth=2;
-    context.stroke();
-    const wingGradient=context.createLinearGradient(-45,0,-10,0);
+    const wingGradient=context.createLinearGradient(-40,-35,15,-5);
     wingGradient.addColorStop(0,"#555");
-    wingGradient.addColorStop(0.5,"#cfcfcf");
-    wingGradient.addColorStop(1,"#666");
+    wingGradient.addColorStop(0.45,"#bfc4c8");
+    wingGradient.addColorStop(1,"#eeeeee");
     context.fillStyle=wingGradient;
     context.fill();
-    context.fillStyle="red";
-    context.beginPath();
-    context.arc(-38,20,4,0,Math.PI*2);
-    context.fill();
-
-    context.beginPath();
-    context.moveTo(18,8);
-    context.lineTo(45,28);
-    context.lineTo(32,34);
-    context.lineTo(10,18);
-    context.closePath();
-    context.strokeStyle="#555";
-    context.lineWidth=2;
+    context.strokeStyle="#666";
+    context.lineWidth=1.5;
     context.stroke();
-    context.fillStyle=wingGradient;
-    context.fill();
-    context.fillStyle="cyan";
     context.beginPath();
-    context.arc(38,20,4,0,Math.PI*2);
+    context.moveTo(10,12);
+    context.lineTo(-12,30);
+    context.lineTo(-40,38);
+    context.lineTo(-28,12);
+    context.lineTo(5,5);
+    const lowerGradient=context.createLinearGradient(
+      -40,35,15,5
+    );
+    lowerGradient.addColorStop(0,"#555");
+    lowerGradient.addColorStop(0.45,"#bfc4c8");
+    lowerGradient.addColorStop(1,"#eeeeee");
+    context.fillStyle=lowerGradient;
     context.fill();
-    context.strokeStyle="#444";
-    context.lineWidth=1;
-    context.beginPath();
-    context.moveTo(-18,14);
-    context.lineTo(-37,27);
     context.stroke();
-    context.shadowBlur=0;
+    context.beginPath();
+    context.arc(-32,-32,3.5,0,Math.PI*2);
+    context.fillStyle="#00ffff";
+    context.shadowColor="#00ffff";
+    context.shadowBlur=12;
+    context.fill();
+    context.beginPath();
+    context.arc(
+      -32,32,3.5,0,Math.PI*2);
+    context.fillStyle="#ff3030";
+    context.shadowColor="#ff3030";
+    context.fill();
+    context.restore();
   }
 
   renderCannons(context){
-    context.fillStyle="#666";
-    context.fillRect(-21,-42,7,26);
-    context.fillRect(14,-42,7,26);
-    context.fillStyle="#111";
-    context.fillRect(-15,-48,5,8);
-    context.fillRect(15,-48,5,8);
-    context.beginPath();
-    context.arc(-18,-48,3,0,Math.PI*2);
+    context.save();
+    const cannonGradient=context.createLinearGradient(
+      0,-10,0,10
+    );
+    cannonGradient.addColorStop(0,"#222");
+    cannonGradient.addColorStop(0.5,"#999");
+    cannonGradient.addColorStop(1,"#333");
+    context.fillStyle=cannonGradient;
+    context.fillRect(25,-15,18,5);
+    context.fillRect(25,10,18,5);
+    context.fillStyle="#00ffff";
+    context.fillRect(40,-16,5,7);
+    context.fillRect(40,-9,5,7);
     context.strokeStyle="#00ffff";
     context.lineWidth=1;
+    context.beginPath();
+    context.arc(44,-12.5,3,0,Math.PI*2);
     context.stroke();
-    if(this.thrusting){
-      context.shadowBlur=10;
-      context.shadowColor="#00ffff";
-    }
-    context.fill();
-    context.shadowBlur=0;
-    
+    context.beginPath();
+    context.arc(
+      44,12.5,3,0,Math.PI*2
+    );
+    context.stroke();
+    context.restore();
   }
 
   renderGlow(context){
-    context.shadowBlur=15;
-    context.shadowColor="#55aaff";
-    context.strokeStyle="#88ddff";
-    context.lineWidth=2;
+    context.save();
+    context.beginPath();
+    context.moveTo(55,0);
+    context.lineTo(22,-18);
+    context.lineTo(-20,-20);
+    context.lineTo(-42,0);
+    context.lineTo(-20,20);
+    context.lineTo(22,18);
+    context.closePath();
+    context.strokeStyle="rgba(100,220,255,0.7)";
+    context.lineWidth=1.5;
+    context.shadowColor="#44ccff";
+    context.shadowBlur=14;
     context.stroke();
-    context.shadowBlur=0;
+    context.restore();
   }
 
   renderFlames(context){
   if(!this.thrusting) return;
-
+  context.save();
+  const flameLength=18+Math.sin(Date.now()*0.03)*7;
+  context.shadowColor="#ff9900";
   context.shadowBlur=20;
-  context.shadowColor="orange";
   context.beginPath();
-  context.moveTo(-4,26);
-  const flameLength=18+Math.sin(Date.now()*0.03)*5;
-  context.lineTo(0,26+flameLength);
-  context.lineTo(4,26);
+  context.moveTo(-30,-13);
+  context.lineTo(-30-flameLength,-7);
+  context.lineTo(-30,-3);
   context.closePath();
   const flameGradient=context.createLinearGradient(
-    0,26,0,26+flameLength
+    -30,0,-30-flameLength,0
   );
-  flameGradient.addColorStop(0,"#ffff99");
-  flameGradient.addColorStop(0.4,"orange");
-  flameGradient.addColorStop(1,"red");
+  flameGradient.addColorStop(0,"#ffffff");
+  flameGradient.addColorStop(0.35,"#ffff55");
+  flameGradient.addColorStop(0.7,"#ff8a00");
+  flameGradient.addColorStop(1,"rgba(255,40,0,0)");
   context.fillStyle=flameGradient;
   context.fill();
   context.beginPath();
-  context.moveTo(-2,26);
-  context.lineTo(0,26+flameLength*0.75);
-  context.lineTo(2,26);
+  context.moveTo(-30,13);
+  context.lineTo(-30-flameLength,7);
+  context.lineTo(-30,3);
   context.closePath();
+  context.fill();
+  context.shadowColor="#66ffff";
+  context.shadowBlur=16;
   context.fillStyle="#66ffff";
-  context.shadowBlur=18;
-  context.shadowColor="#44ffff";
+  context.beginPath();
+  context.arc(-30,-8,2.5,0,Math.PI*2);
   context.fill();
   context.beginPath();
-  context.arc(0,28,2,0,Math.PI*2);
-  context.fillStyle="white";
-  const pulseGlow=18+Math.sin(Date.now()*0.015)*8;
-  context.shadowBlur=pulseGlow;
-  context.shadowColor="white";
+  context.arc(
+    -30,8,2.5,0,Math.PI*2);
   context.fill();
-  context.beginPath();
-  context.moveTo(-7,25);
-  context.lineTo(-12,29);
-  context.lineTo(-7,31);
-  context.fillStyle="rgba(0,255,255,0.4)";
-  context.fill();
-  context.beginPath();
-  context.moveTo(7,25);
-  context.lineTo(12,29);
-  context.lineTo(7,31);
-  context.fillStyle="rgba(0,255,255,0.4)";
-  context.fill();
-  context.shadowBlur=0;
+  context.restore();
   }
 }

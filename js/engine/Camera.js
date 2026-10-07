@@ -1,15 +1,18 @@
 import { Vector2 } from "../math/Vector2.js";
 export class Camera{
   constructor(game,width,height){
+    this.game=game;
     this.position=new Vector2(0,0);
     this.width=window.innerWidth;
     this.height=window.innerHeight;
     this.target=null;
     this.smoothness=0.08;
+    this.lookAheadStrength=30;
     this.shakeStrength=0;
     this.shakeDuration=0;
     this.offset=new Vector2(0,0);
     this.deadZone=100;
+    this.focalLength=700;
     this.resize();
   }
 
@@ -24,12 +27,10 @@ export class Camera{
 
   update(){
     if(this.target){
-      let lookAheadX=this.target.velocity.x*30;
-      let lookAheadY=this.target.velocity.y*30;
-
-      let targetX=this.target.position.x+lookAheadX-this.width/2;
-      let targetY=this.target.position.y+lookAheadY-this.height/2;
-
+      let lookAheadX=this.target.velocity.x*this.lookAheadStrength;
+      let lookAheadY=this.target.velocity.y*this.lookAheadStrength;
+      const targetX=this.target.position.x+lookAheadX-this.width/2;
+      const targetY=this.target.position.y+lookAheadY-this.height/2;
       this.position.x+=(targetX-this.position.x)*this.smoothness;
       this.position.y+=(targetY-this.position.y)*this.smoothness;
     }
@@ -46,8 +47,19 @@ export class Camera{
   
   apply(position, depth=1){
     return {
-      x:position.x-this.position.x*depth,
-      y:position.y-this.position.y*depth
+      x:position.x-this.position.x*depth+this.offset.x,
+      y:position.y-this.position.y*depth+this.offset.y
+    };
+  }
+
+  project(position,depth=1){
+    const perspective=this.focalLength/(this.focalLength+depth);
+    return{
+      x:(position.x-this.position.x)*perspective+
+      this.width/2+this.offset.x,
+      y:(position.y-this.position.y)*perspective+
+      this.width/2+this.offset.y,
+      scale:perspective
     };
   }
 

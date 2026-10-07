@@ -6,13 +6,18 @@ export class Universe {
     this.game=game;
     this.stars=[];
     this.starCount=250;
+    this.minDepth=300;
+    this.maxDepth=4000;
     this.nebulas=[];
     this.nebulaRadius=1800;
     this.nebulaCount=5;
+    this.shootingStars=[];
+    this.starNearDistance=80;
+    this.starFarDistance=3000;
+    this.starDepthSpeed=1.5;
     this.generate();
     this.generateAroundPlayer();
     this.generateNebulas();
-    this.shootingStars=[];
     for(let i=0;i<3;i++){
       this.shootingStars.push(
         new ShootingStar(this.game)
@@ -20,14 +25,17 @@ export class Universe {
     }
   }
 
-
   generate(){
     for(let i=0;i<this.starCount;i++){
       const x=Math.random()*4000-2000;
       const y=Math.random()*4000-2000;
       const size=Math.random()*2+1;
-      let depth=Math.random()*0.8+0.2;
+      const depth=this.minDepth+Math.random()*(this.maxDepth-this.minDepth);
       const star=new Star(x,y,size,depth);
+      star.depth=depth;
+      this.stars.push(star);
+      star.z=this.starNearDistance+Math.random()*
+      (this.starFarDistance-this.starNearDistance);
       this.stars.push(star);
     }
   }
@@ -36,19 +44,19 @@ export class Universe {
     if(!this.game.ship){
       return;
     }
-    const player=this.game.ship;
-    let ship=this.game.ship;
+    const ship=this.game.ship;
     for(let i=0;i<100;i++){
-      let angle=Math.random()*Math.PI*2;
-      let distance=1500+Math.random()*2000;
-      let x=ship.position.x+Math.cos(angle)*distance;
-      let y=ship.position.y+Math.sin(angle)*distance;
-      let size=Math.random()*2+1;
-      let depth=Math.random()*0.8+0.2;
-      let star=new Star(
-        x,y,
-        size,depth
+      const angle=Math.random()*Math.PI*2;
+      const distance=1500+Math.random()*2000;
+      const x=ship.position.x+Math.cos(angle)*distance;
+      const y=ship.position.y+Math.sin(angle)*distance;
+      const size=Math.random()*2+1;
+      const depth=this.minDepth+Math.random()*(this.maxDepth-this.minDepth);
+      const star=new Star(
+        x,y,size,depth
       );
+      star.z=this.starNearDistance+Math.random()*
+      (this.starFarDistance-this.starNearDistance);
       this.stars.push(star);
     }
   }
@@ -79,18 +87,17 @@ export class Universe {
     const colors=["#5B6CFF","#8A2BE2","#00BCDA","#FF5FCF"];
     this.nebulas.push(
       new Nebula(
-        x,y,
-        250+Math.random()*300,
-        colors[Math.floor(Math.random()*colors.length)],0.05+Math.random()*0.1
+        x,y,250+Math.random()*300,
+        colors[Math.floor(Math.random()*colors.length)],
+        0.05+Math.random()*0.1
       )
     );
     this.nebulas=this.nebulas.filter(nebula=>{
       const dx=nebula.position.x-this.game.ship.position.x;
       const dy=nebula.position.y-this.game.ship.position.y;
-      return Math.hypot(dx,dy)<5000;
+      return (Math.hypot(dx,dy)<5000);
     });
   }
-
 
   updateNebulas(){
     let nearby=0;
@@ -107,9 +114,50 @@ export class Universe {
     }
   }
 
+  updateStarDepth(){
+    if(!this.game.ship){
+      return;
+    }
+    const ship=this.game.ship;
+    const velocity=ship.velocity;
+    const speed=Math.hypot(velocity.x,velocity.y);
+    const forward=ship.getForwardVector();
+    const forwardSpeed=velocity.x*forward.x+velocity.y*forward.y;
+    const depthMovement=Math.max(0,forwardSpeed)*this.starDepthSpeed;
+    const ambientMovement=0.15;
+    const movement=ambientMovement+depthMovement;
+    for (const star of this.stars){
+      star.z-=movement;
+      if(star.z<=this.starNearDistance){
+        star.z=this.starFarDistance-Math.random()*500;
+        const angle=Math.random()*Math.PI*2;
+        const distance=1000+Math.random()*2500;
+        star.position.x=ship.position.x+Math.cos(angle)*distance;
+        star.position.y=ship.position.y+Math.sin(angle)*distance;
+      }
+    }
+  }
+
+  recycleStars(){
+    if(!this.game.ship){return;}
+    const ship=this.game.ship;
+    const forward=ship.getForwardVector();
+    const right=ship.getRightVector();
+    for(const star of this.stars){
+      if(star.depth>0){
+        continue;
+      }
+      const side=(Math.random()-0.5)*3000;
+      const distance=this.maxDepth;
+      star.position.x=ship.position.x+forward.x*distance+right.x*side;
+      star.position.y=ship.position.y+forward.y*distance+right.y*side;
+      star.depth=this.maxDepth;
+    }
+  }
 
   update(){
   const camera=this.game.camera;
+  this.updateStarDepth();
   for(const nebula of this.nebulas){
     nebula.update();
   }
@@ -117,25 +165,25 @@ export class Universe {
   for(const shooting of this.shootingStars){
     shooting.update();
   }
+  this.recycleStars();
   for(const star of this.stars){
     const dx=star.position.x-camera.position.x;
     const dy=star.position.y-camera.position.y;
     const distance=Math.sqrt(dx*dx+dy*dy);
-    if(distance>3000){
+    if(distance>4000){
       const angle=Math.random()*Math.PI*2;
-      const radius=1800+Math.random()*500;
+      const radius=1800+Math.random()*1000;
       star.position.x=camera.position.x+Math.cos(angle)*radius;
       star.position.y=camera.position.y+Math.sin(angle)*radius;
     }
-  }
-  
+  } 
 }
 
 render(context, camera){
   for(const nebula of this.nebulas){
-  let dx=nebula.position.x-this.game.ship.position.x;
-  let dy=nebula.position.y-this.game.ship.position.y;
-    let distance=Math.sqrt(dx*dx+dy*dy);
+  const dx=nebula.position.x-this.game.ship.position.x;
+  const dy=nebula.position.y-this.game.ship.position.y;
+    const distance=Math.sqrt(dx*dx+dy*dy);
     if(distance<2500){
     nebula.render(context,camera);
     }

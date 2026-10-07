@@ -1,7 +1,7 @@
 import { GameObject } from "../engine/GameObject.js";
 import { Vector2 } from "../math/Vector2.js";
 export class Asteroid extends GameObject{
-  constructor(x,y,size=30){
+  constructor(x,y,size=20){
     super(x,y);
     this.size=size;
     this.mass=size/10;
@@ -21,7 +21,7 @@ export class Asteroid extends GameObject{
     this.scoreValue=this.size*100;
     this.hitTimer=0;
     this.craters=[];
-    for(let i=0;i<12;i++){
+    for(let i=0;i<8;i++){
       this.craters.push({
         x:(Math.random()-0.5)*this.radius*1.5,
         y:(Math.random()-0.5)*this.radius*1.5,
@@ -30,7 +30,7 @@ export class Asteroid extends GameObject{
     }
     this.generateCraters();
     this.surfacePoints=[];
-    for(let i=0;i<100;i++){
+    for(let i=0;i<50;i++){
       this.surfacePoints.push(
         {x:(Math.random()-0.5)*this.radius*2,
           y:(Math.random()-0.5)*this.radius*2,
@@ -163,13 +163,13 @@ export class Asteroid extends GameObject{
         );
       }
 
-if(this.size>=30){
+if(this.size>=20){
     this.scoreValue=10;
   }
-  else if(this.size>=15){
-    this.scoreValue=30;
+  else if(this.size>=10){
+    this.scoreValue=20;
   }
-  else{this.scoreValue=60;}
+  else{this.scoreValue=30;}
 
     context.beginPath();
     for(let i=0;i<this.points.length;i++){

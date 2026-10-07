@@ -5,6 +5,7 @@ export class Star extends GameObject{
     super(x,y);
     this.ship=ship;
     this.depth=depth;
+    this.z=500+Math.random()*2500;
     this.size=size;
     this.radius=size;
     this.color=colors[Math.floor(Math.random()*colors.length)];
@@ -22,65 +23,39 @@ export class Star extends GameObject{
   update(){
   }
 
- /* drawStar(context){
-    let spikes=5;
-    let outerRadius=this.size;
-    let innerRadius=this.size*0.45;
-    let rotation=Math.PI/2*3;
-    context.beginPath();
-    for(let i=0;i<spikes;i++){
-      let x=Math.cos(rotation)*outerRadius;
-      let y=Math.sin(rotation)*outerRadius;
-      context.lineTo(x,y);
-      rotation+=Math.PI/spikes;
-      x=Math.cos(rotation)*innerRadius;
-      y=Math.sin(rotation)*innerRadius;
-      context.lineTo(x,y);
-      rotation+=Math.PI/spikes;
-
-    }
-    context.closePath();
-  }*/
-
   render(context,camera){
-      const screenPosition=camera.apply(this.position, this.depth);
+    const focalLength=500;
+    const perspective=focalLength/(focalLength+this.z);
+    const relativeX=this.position.x-camera.position.x;
+    const relativeY=this.position.y-camera.position.y;
+    const screenX=relativeX*perspective+camera.width/2;
+    const screenY=relativeY*perspective+camera.height/2;
+    const projectedSize=Math.max(0.3,this.size*perspective);
+    if(this.z<=1){
+      return;
+    }
+      //const screenPosition=camera.apply(this.position, this.depth);
       context.save();
       context.translate(
-        screenPosition.x,
-        screenPosition.y
+        screenX,screenY
       );
       this.brightness+=Math.sin(performance.now()*this.twinkleSpeed+this.twinkleOffset)*this.twinkle;
       this.brightness=Math.max(0.3,Math.min(1,this.brightness));
+      const glowRadius=Math.max(1,projectedSize*4);
       context.beginPath();
-      let glow=context.createRadialGradient(
-        0,
-        0,
-        0,
-        0,
-        0,
-        Math.max(1, this.size*4)
+      const glow=context.createRadialGradient(
+        0, 0, 0, 0,0,glowRadius
       );
 
-       glow.addColorStop(
-        0,
-        this.color
-      );
-      glow.addColorStop(
-        1,
-        "transparent"
-      );
-
-      context.shadowBlur=10;
+       glow.addColorStop(0,this.color);
+      glow.addColorStop(1,"transparent");
+      context.shadowBlur=10*perspective;
       context.shadowColor=this.color;
       context.fillStyle=glow;
       context.globalAlpha=this.brightness*this.opacity;
       context.beginPath();
       context.arc(
-        0,
-        0,
-        this.size*4,
-        0,
-        Math.PI*2
+        0,0,glowRadius,0,Math.PI*2
       );
       context.fill();
       context.globalAlpha=this.opacity;
@@ -90,26 +65,20 @@ export class Star extends GameObject{
       if(this.type<0.2){
         context.beginPath();
         context.arc(
-          0,
-          0,
-          this.size,
-          0,
-          Math.PI*2
+          0,0,projectedSize,0,Math.PI*2
         );
         context.fill();
       }else{
       context.rotate(Math.PI/4);
        context.beginPath();
-      context.moveTo(0,-this.size*2);
-      context.lineTo(this.size*0.5,0);
-      context.lineTo(0, this.size*2);
-      context.lineTo(-this.size*0.5,0);
+      context.moveTo(0,-projectedSize*2);
+      context.lineTo(projectedSize*0.5,0);
+      context.lineTo(0,projectedSize*2);
+      context.lineTo(-projectedSize*0.5,0);
       context.closePath();
       context.fill();
-      }
-      
+      } 
     context.globalAlpha=1;
-
     context.restore();
   }
 }

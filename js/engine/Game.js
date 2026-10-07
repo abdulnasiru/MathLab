@@ -1,4 +1,4 @@
-console.count("Game update");
+
 import {Camera} from "./Camera.js";
 import { Collision } from "./Collision.js";
 import {Bullet} from "../entities/Bullet.js";
@@ -19,8 +19,7 @@ import { FireButton } from "../input/FireButton.js";
 import { Vector2 } from "../math/Vector2.js";
 import { PulseButton } from "../input/PulseButton.js";
 import { isTouchDevice } from "../utils/Device.js";
-import { WeaponButton } from "../input/WeaponButton.js";
-
+import { WeaponButton } from "../input/weaponButton.js";
 export class Game{
   constructor(canvas){
     this.canvas=canvas;
@@ -523,45 +522,263 @@ export class Game{
     }
   }
 
-  drawUI(context){
-    let formattedScore=String(this.score).padStart(6,"0");
-    let size=window.innerWidth<600?20:24;
-    context.save();
-    context.fillStyle="white";
-    context.font=`${size}px Arial`;
-    context.textAlign="center";
-    context.fillText(
-      `SCORE  ${this.score}`.padStart(6,"0"),100,60
+  drawHUD(context){
+    const isMobile=window.innerWidth<600;
+    const scale=isMobile?0.78:1;
+    const hudWidth=Math.min(window.innerWidth*(isMobile?0.72:0.42),
+      isMobile?390:620
     );
+    const hudHeight=isMobile?42:50;
+    const x=(this.canvas.width-hudWidth)/2;
+    const y=isMobile?12:18;
+    context.save();
+    context.fillStyle="rgba(4,12,28,0.48)";
+    context.strokeStyle="rgba(80,210,255,0.18)";
+    context.lineWidth=1;
+    context.beginPath();
+    context.roundRect(
+      x,y,hudWidth,hudHeight,hudHeight/2
+    );
+    context.fill();
+    context.stroke();
+    const glow=context.createLinearGradient(
+      x,y,x+hudWidth,y
+    );
+    glow.addColorStop(
+      0,"rgba(0,220,255,0)"
+    );
+    glow.addColorStop(
+      0.5,"rgba(0,220,255,0.35)"
+    );
+    glow.addColorStop(
+      1,"rgba(90,220,255,0)"
+    );
+    context.fillStyle=glow;
+    context.fillRect(
+      x+hudWidth*0.15,y,hudWidth*0.7,1
+    );
+    //HUD CONTENT
+    const centerY=y+hudHeight/2;
+    const padding=hudWidth*0.04;
+    const usableWidth=hudWidth-padding*2;
+    const spacing=usableWidth/4;
+    const positions=[
+      x+padding,x+padding+spacing,
+      x+padding+spacing*2,x+padding+spacing*3,
+      x+padding+spacing*4
+    ];
+
+    this.drawLivesHUD(
+      context,positions[0],
+      centerY,scale
+    );
+    this.drawScoreHUD(
+      context,positions[1],
+      centerY,scale
+    );
+    this.drawWaveHUD(
+      context,positions[2],
+      centerY,scale
+    );
+    this.drawPulseHUD(
+    context,positions[3],
+    centerY,scale
+    );
+    this.drawWeaponHUD(
+      context,positions[4],
+      centerY,scale
+    );
+    context.strokeStyle="rgba(130,220,255,0.12)";
+    context.lineWidth=1;
+    for(let i=1;i<5;i++){
+      const dividerX=x+padding+spacing*(i-0.5);
+      context.beginPath();
+      context.moveTo(
+        dividerX,y+hudHeight*0.28
+      );
+      context.lineTo(
+        dividerX,y+hudHeight*0.72
+      );
+      context.stroke();
+    }
     context.restore();
   }
 
-  drawPulse(context,ship){
-    const width=150;
-    const height=15;
-    const x=30;
-    const y=140;
-    let pulseSize=window.innerWidth<600?16:20;
-    context.fillStyle="rgba(255,255,255,0.2)";
-    context.fillRect(
-      x,y,width,height
+  drawLivesHUD(context,x,y,scale){
+    context.save();
+    const spacing=17*scale;
+    for(let i=0;i<3;i++){
+      const alive=i<this.lives;
+      context.globalAlpha=alive?1:0.18;
+      context.strokeStyle="#ffffff";
+      context.lineWidth=1.7*scale;
+      context.beginPath();
+      context.moveTo(x,
+        y-8*scale
+      );
+      context.lineTo(
+        x-5*scale,y+7*scale
+      );
+      context.lineTo(
+        x,y+4*scale
+      );
+      context.lineTo(
+        x+5*scale,y+7*scale
+      );
+      context.closePath();
+      context.stroke();
+      if(alive){
+        context.fillStyle="rgba(0,220,255,0.9)";
+        context.beginPath();
+        context.arc(
+          x,y+1*scale,1.5*scale,0,Math.PI*2
+        );
+        context.fill();
+      }
+      x+=spacing;
+    }
+    context.restore();
+  }
+
+  drawScoreHUD(context,x,y,scale){
+    context.save();
+    context.textAlign="left";
+    context.textBaseline="middle";
+    const iconSize=7*scale;
+    context.strokeStyle="rgba(255,255,255,0.9)";
+    context.lineWidth=1.5*scale;
+    context.beginPath();
+    context.moveTo(
+      x,y-iconSize
     );
-    let glow=Math.sin(this.time)*10+20;
-    context.shadowBlur=glow;
+    context.lineTo(
+      x+iconSize,y
+    );
+    context.lineTo(
+      x,y+iconSize
+    );
+    context.lineTo(
+      x-iconSize,y
+    );
+    context.closePath();
+    context.stroke();
+    context.font=`${Math.round(15*scale)}px Arial`;
+    context.fillStyle="rgba(255,255,255,0.95)";
+    const score=String(this.score).padStart(4,"0");
+    context.fillText(`${score}`,x+15*scale,y);
+    context.restore();
+  }
+
+  drawWaveHUD(context,x,y,scale){
+    context.save();
+    const radius=7*scale;
+    context.strokeStyle="rgba(255,255,255,0.75)";
+    context.lineWidth=1.4*scale;
+    context.beginPath();
+    context.arc(
+      x,y,radius,0,Math.PI*2
+    );
+    context.stroke();
+    context.fillStyle="rgba(0,220,255,0.9)";
+    context.beginPath();
+    context.arc(
+      x,y,2*scale,0,Math.PI*2
+    );
+    context.fill();
+    context.textAlign="left";
+    context.textBaseline="middle";
+    context.font=`${Math.round(15*scale)}px Arial`;
+    context.fillStyle="rgba(255,255,255,0.95)";
+    const wave=String(this.wave).padStart(2,"0");
+    context.fillText(` ${wave}`,x+14*scale,y);
+    context.restore();
+  }
+
+  drawPulseHUD(context,x,y,scale){
+    context.save();
+    const ratio=this.ship.pulseEnergy/
+    this.ship.maxPulseEnergy;
+    const radius=11*scale;
+    const ready=ratio>=0.9;
+    context.strokeStyle="rgba(255,255,255,0.18)";
+    context.lineWidth=2.5*scale;
+    context.beginPath();
+    context.arc(
+      x,y,radius,0,Math.PI*2
+    );
+    context.stroke();
+    context.strokeStyle="#00eaff";
+    context.shadowBlur=ready?12:4;
     context.shadowColor="#00ffff";
-    context.fillStyle="#00ffff";
-    context.fillRect(
-      x,y,width*(this.ship.pulseEnergy/this.ship.maxPulseEnergy),
-      height
+    context.beginPath();
+    context.arc(
+      x,y,radius,-Math.PI/2,
+      -Math.PI/2+Math.PI*2*ratio
     );
-    let readySize=window.innerWidth<600?10:12;
-    context.fillStyle="white";
-    context.font=`${readySize}px Arial`;
-    let status=(this.ship.pulseEnergy/this.ship.maxPulseEnergy)>0.9?" READY":" CHARGING";
-    
-    context.fillText(
-      status,200,157
+    context.stroke();
+    context.shadowBlur=0;
+    context.strokeStyle=ready?"#ffffff":"rgba(255,255,255,0.8)";
+    context.lineWidth=1.5*scale;
+    context.beginPath();
+    context.moveTo(
+    x+2*scale,y-7*scale
+    )
+    context.lineTo(
+    x-3*scale,y
     );
+    context.lineTo(
+    x+1*scale,y
+    );
+    context.lineTo(
+    x-2*scale,y+7*scale
+    );
+    context.stroke()
+    context.restore();
+  }
+
+  drawWeaponHUD(context,x,y,scale){
+    context.save();
+    const weapon=this.ship?.currentWeapon || "SINGLE";
+    const twin=weapon==="TWIN";
+    const length=12*scale;
+    const gap=5*scale;
+    context.strokeStyle=twin?"#00eaff":"rgba(255,255,255,0.9)";
+    context.lineWidth=2*scale;
+    context.lineCap="round";
+    if(twin){
+      context.beginPath();
+      context.moveTo(
+        x-gap,y-8*scale
+      );
+      context.lineTo(
+        x-gap,y+6*scale
+      );
+      context.moveTo(
+        x+gap,y-8*scale
+      );
+      context.lineTo(
+        x+gap,y+6*scale
+      );
+      context.stroke();
+    }
+    else{
+      context.beginPath();
+      context.moveTo(
+        x,y-9*scale
+      );
+      context.lineTo(
+        x,y+7*scale
+      );
+      context.stroke();
+    }
+    context.fillStyle=twin?"#00eaff":"rgba(255,255,255,0.9)";
+    context.beginPath();
+    context.arc(
+      x,y+5*scale,
+      2.5*scale,0,Math.PI*2
+    );
+    context.fill();
+    context.restore();
   }
 
   render(context,camera){
@@ -613,13 +830,6 @@ export class Game{
     );
   }
 
-  context.save();
-  context.fillStyle="rgba(0,20,50,0.45)";
-  context.roundRect(20,20,260,160,20);
-  context.fill();
-
-  this.drawUI(context);
-
   if(this.gameOver){
     context.save();
     context.fillStyle="rgba(0,0,0,0.65)";
@@ -635,25 +845,8 @@ export class Game{
       this.canvas.height/2+10
     );
   }
-
-  let livesSize=window.innerWidth<600?24:28;
-  context.font=`${livesSize}px Arial`;
-  for(let i=0;i<this.lives;i++){
-    context.fillStyle="#ff3030";
-    context.beginPath();
-    context.arc(
-      45+i*45,90,
-      10,0,Math.PI*2
-    );
-    context.fill();
-  }
-
-  this.drawPulse(context);
-  context.font="14px Arial";
-  context.fillText("WEAPON: "+this.ship.currentWeapon,30,30);
-
+ this.drawHUD(context);
   context.shadowBlur=0;
-
   context.restore();
   }
 }

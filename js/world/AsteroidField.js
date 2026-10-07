@@ -3,9 +3,9 @@ export class AsteroidField{
   constructor(game){
     this.game=game;
     this.asteroids=[];
-    this.maxAsteroids=30;
+    this.maxAsteroids=20;
     this.spawnDistance=1500;
-    this.count=25;
+    this.count=15;
   }
   update(){
     this.spawnAroundPlayer();
@@ -19,7 +19,7 @@ export class AsteroidField{
       const distance=this.spawnDistance+Math.random()*1000;
       const x=ship.position.x+Math.cos(angle)*distance;
       const y=ship.position.y+Math.sin(angle)*distance;
-      const size=20+Math.random()*60;
+      const size=15+Math.random()*60;
       const asteroid=new Asteroid(x,y,size);
       this.asteroids.push(asteroid);
       this.game.add(asteroid);

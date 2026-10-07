@@ -7,7 +7,7 @@ Instead of learning mathematics only through equations and exercises, MathLab ex
 
 You pilot a spacecraft through a dynamic space environment while avoiding and destroying asteroids.
 The game combines arcade-style gameplay with mathematical concepts that are normally studied in mathematics, physics, and programming.
-The goal is to make mathematics something you can **see, interact with, and experience through code.**
+The goal is to make mathematics something you can see, interact with, and experience through code.
 
 ## CURRENT FEATURES
 
@@ -68,13 +68,13 @@ This allows mathematical concepts to become part of the gameplay itself.
 
 ### Desktop
 
-Action           Control
+Action | Control
 
-Move              Keyboard controls (W, A/D)
-Shoot             Fire control (Space/T)
-Pulse             `E`
-Weapon            Weapon control (Q)
-Restart           Enter
+Move   | W / Forward arrow           
+Shoot  | Space / T          
+Pulse  | E        
+Weapon | Q        
+Restart| Enter   
 
 ### Mobile
 

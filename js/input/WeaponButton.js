@@ -1,20 +1,13 @@
 export class WeaponButton{
   constructor(ship){
     this.ship=ship;
-    let bottomOffset=40;
-    if(window.innerWidth<600){
-      bottomOffset=100;
-    }
-    const scale=Math.min(window.innerWidth/400,1.4);
-    this.radius=20*scale;
-
+    this.pressed=false;
+    this.pulse=0;
     this.weaponButtonX=0;
     this.weaponButtonY=0;
     this.touchId=null;
     this.resize();
-    this.pressed=false;
     this.setupControls();
-    
     window.addEventListener("resize",()=>{
       this.resize();
     });
@@ -25,7 +18,7 @@ export class WeaponButton{
       x-this.weaponButtonX,
       y-this.weaponButtonY
     );
-    return distance<=this.radius;
+    return distance<=this.radius*1.5;
   }
 
   press(id){
@@ -44,6 +37,7 @@ export class WeaponButton{
 
   setupControls(){
     const canvas=document.querySelector("canvas");
+    if(!canvas) return;
     canvas.addEventListener("mousedown",(event)=>{
       const rect=canvas.getBoundingClientRect();
       const x=event.clientX-rect.left;
@@ -52,12 +46,13 @@ export class WeaponButton{
         this.press("mouse");
       }
     });
-    canvas.addEventListener("mouseup",()=>{
+    window.addEventListener("mouseup",()=>{
       this.release("mouse");
     });
     canvas.addEventListener("touchstart",(event)=>{
+      if(this.touchId!==null) return;
+      const rect=canvas.getBoundingClientRect();
       for(const touch of event.changedTouches){
-        const rect=canvas.getBoundingClientRect();
         const x=touch.clientX-rect.left;
         const y=touch.clientY-rect.top;
         if(this.containsPoint(x,y)){
@@ -67,7 +62,7 @@ export class WeaponButton{
         }
       }
     },{passive:false});
-    canvas.addEventListener("touchend",(event)=>{
+    window.addEventListener("touchend",(event)=>{
       for(const touch of event.changedTouches){
         if(this.touchId===touch.identifier){
           event.preventDefault();
@@ -75,7 +70,7 @@ export class WeaponButton{
           break;
         }
       }
-    },{passive:false});
+    },{passive:true});
     canvas.addEventListener("touchcancel",(event)=>{
       for(const touch of event.changedTouches){
         if(this.touchId===touch.identifier){
@@ -83,59 +78,100 @@ export class WeaponButton{
           break;
         }
       }
-    },{passive:false});   
+    },{passive:true});   
   }
 
   resize(){
-    const scale=Math.min(window.innerWidth/400,1.4);
+    const width=window.innerWidth;
+    const height=window.innerHeight;
+    const scale=Math.min(width/300,1.4);
     this.radius=20*scale;
-    this.weaponButtonX=window.innerWidth-this.radius-45;
-    this.weaponButtonY=window.innerHeight/2-20;
+    const bottomOffset=width<600?100:40;
+    this.weaponButtonX=width-this.radius-40;
+    this.weaponButtonY=height-bottomOffset-this.radius*2-35;
   }
 
-  render(context,x,y,radius){
-   const visualRadius=this.pressed?50:25;
+  drawBullet(context,x,y,scale){
     context.save();
-    context.shadowBlur=this.pressed?40:20;
-    context.shadowColor="#00ffff";
-    context.globalAlpha=0.25;
-    context.beginPath();
-    context.arc(
-      this.weaponButtonX,this.weaponButtonY,
-      visualRadius+10,0,
-      Math.PI*2
+    context.translate(x,y);
+    context.scale(scale,scale);
+    context.shadowColor="#00DFFF";
+    context.shadowBlur=this.pressed?13:5;
+    const tipGradient=context.createLinearGradient(
+      -5,-19,5,-8
     );
-    context.fillStyle=this.pressed?"#00bfff":"rgba(0,255,255,0.25)";
-    context.fill();
-    context.globalAlpha=1;
-
-    context.shadowBlur=this.pressed?40:20;
-    context.shadowColor="#c084ff";
+    tipGradient.addColorStop(0,"#FFF0B5");
+    tipGradient.addColorStop(0.35,"#DDA04A");
+    tipGradient.addColorStop(1,"#8C4A21");
     context.beginPath();
-    for(let i=0;i<6;i++){
-      const angle=Math.PI/3*i-Math.PI/6;
-      const px=x+radius*Math.cos(angle);
-      const py=y+radius*Math.sin(angle);
-      if(i===0){
-        context.moveTo(px,py);
-      }else{context.lineTo(px,py);}
-    }
-
-    context.lineWidth=3;
-    context.strokeStyle="#c084ff";
-    context.stroke();
-    context.fillStyle=this.pressed?"#d8b4fe":"#24163d";
+    context.moveTo(0,-21);
+    context.quadraticCurveTo(5,-17,5,-11);
+    context.lineTo(-5,-11);
+    context.quadraticCurveTo(-5,-17,0,-21);
+    context.closePath();
+    context.fillStyle=tipGradient;
+    context.fill();
+    const bodyGradient=context.createLinearGradient(
+      -6,0,6,0
+    );
+    bodyGradient.addColorStop(0,"#4B657B");
+    bodyGradient.addColorStop(0.22,"#C8E2EE");
+    bodyGradient.addColorStop(0.45,"#F5FBFF");
+    bodyGradient.addColorStop(0.72,"#91B5C8");
+    bodyGradient.addColorStop(1,"#354F68");
+    context.beginPath();
+    context.moveTo(-5,-10);
+    context.lineTo(5,-10);
+    context.lineTo(5,12);
+    context.lineTo(3,16);
+    context.lineTo(-3,16);
+    context.lineTo(-5,12);
+    context.closePath();
+    context.fillStyle=bodyGradient;
     context.fill();
     context.shadowBlur=0;
-    context.fillStyle="white";
-    context.font="bold 12px Arial";
-    context.textAlign="center";
-    context.textBaseline="middle";
-    const text=this.ship.currentWeapon==="SINGLE"
-    ?"SINGLE":"TWIN";
+    context.fillStyle="#587A91";
+    context.fillRect(-5,3,10,2);
+    context.strokeStyle="rgba(255,255,255,0.85)";
+    context.lineWidth=1.2;
+    context.beginPath();
+    context.moveTo(-2.5,-8);
+    context.lineTo(-2.5,10);
+    context.stroke();
+    context.strokeStyle="#00E5FF";
+    context.lineWidth=1.2;
+    context.beginPath();
+    context.moveTo(-4,12);
+    context.lineTo(4,12);
+    context.stroke();
+    context.restore();
+  }
 
-    context.fillText(text,this.weaponButtonX,
-      this.weaponButtonY-5);
+  render(context){
+    this.pulse+=0.045;
+    const x=this.weaponButtonX;
+    const y=this.weaponButtonY;
+    const radius=this.radius;
+    const active=this.ship.currentWeapon==="TWIN";
+    const scale=Math.min(window.innerWidth/400,1.4);
+
+    context.save();
+    const bulletScale=0.8*scale;
+    const separation=7*scale;
+    context.shadowColor=active?"#00eaff":"rgba(180,200,220,0.6)";
+    context.shadowBlur=active?18:10;
+    if(active){
+      this.drawBullet(context,x-separation,y,bulletScale);
+      this.drawBullet(context,x+separation,y,bulletScale);
+    }
+    else{
+      this.drawBullet(context,x,y,bulletScale);
+    }
+    context.shadowBlur=0;
+    context.fillStyle=active?"#00E5FF":"#B7C7D8";
+    context.beginPath();
+    context.arc(x,y+this.radius+7,2.5,0,Math.PI*2);
+    context.fill();
 
     context.restore();
   }

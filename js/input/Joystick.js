@@ -1,85 +1,98 @@
 export class Joystick{
   constructor(){
-    let bottomOffset=40;
-    if(window.innerWidth<700){
-      bottomOffset=100;
-    }
-    const margin=window.innerWidth<700?25:40;
-    const scale=Math.min(window.innerWidth/300,1.4);
-    this.radius=20*scale;
-    this.baseX=this.radius+margin;
-    this.baseY=window.innerHeight-this.radius-bottomOffset;
-    this.knobX=this.baseX;
-    this.knobY=this.baseY;
-    this.knobRadius=this.radius*0.45;
+    this.radius=0;
+    this.baseX=0;
+    this.baseY=0;
+    this.knobX=0;
+    this.knobY=0;
+    this.knobRadius=0;
     this.active=false;
     this.moveX=0;
     this.moveY=0;
-    this.setupControls();
-    this.targetX=this.baseX;
-    this.targetY=this.baseY;
+    this.targetX=0;
+    this.targetY=0;
     this.smoothness=0.25;
+    this.resize();
+    this.setupControls();
     window.addEventListener("resize",()=>{
       this.resize();
     });
   }
 
   setupControls(){
+    this.touchId=null;
+    this.deadZone=0.10;
+    this.steeringPower=1.40;
     window.addEventListener(
       "touchstart",(event)=>{
-        let rect=document.querySelector("canvas").getBoundingClientRect();
-        const touch=event.touches[0];
-        const distance=Math.hypot((touch.clientX-rect.left)-this.baseX,
-          (touch.clientY-rect.top)-this.baseY
+        const canvas=document.querySelector("canvas");
+        if(!canvas || this.active) return;
+        const rect=canvas.getBoundingClientRect();
+        for(const touch of event.changedTouches){
+          const x=touch.clientX-rect.left;
+          const y=touch.clientY-rect.top;
+        const distance=Math.hypot(
+          x-this.baseX,y-this.baseY
         );
         if(distance<this.radius*2){
           this.active=true;
+          this.touchId=touch.identifier;
+          this.targetX=this.baseX;
+          this.targetY=this.baseY;
         }
       }
+    },{passive:true}
     );
-
     window.addEventListener("touchmove",(event)=>{
-      if(!this.active) return;
-      const touch=event.touches[0];
-      let rect=document.querySelector("canvas").getBoundingClientRect();
+      if(!this.active || this.touchId===null) return;
+      const touch=Array.from(event.touches).find(
+        (item)=>item.identifier===this.touchId
+      );
+      if(!touch) return;
+      const canvas=document.querySelector("canvas");
+      if(!canvas) return;
+      let rect=canvas.getBoundingClientRect();
       let dx=(touch.clientX-rect.left)-this.baseX;
       let dy=(touch.clientY-rect.top)-this.baseY;
       let distance=Math.hypot(dx,dy);
-
       if(distance>this.radius){
         dx=(dx/distance)*this.radius;
         dy=(dy/distance)*this.radius;
       }
       this.targetX=this.baseX+dx;
       this.targetY=this.baseY+dy;
-      this.moveX=dx/this.radius;
-      this.moveY=dy/this.radius;
-      const deadZone=0.15;
-      if(Math.abs(this.moveX)<deadZone){
-        this.moveX=0;
-      }
-      if(Math.abs(this.moveY)<deadZone){
-        this.moveY=0;
-      }
-    });
-
-    window.addEventListener("touchend",()=>{
+      let rawX=dx/this.radius;
+      let rawY=dy/this.radius;
+      if(Math.abs(rawX)<this.deadZone) rawX=0;
+      if(Math.abs(rawY)<this.deadZone) rawY=0;
+      this.moveX=Math.sign(rawX)*Math.pow(Math.abs(rawX),
+    this.steeringPower);
+      this.moveY=Math.sign(rawY)*Math.pow(Math.abs(rawY),
+    this.steeringPower);
+    },{passive:true});
+    const releaseJoystick=(event)=>{
+      if(this.touchId===null) return;
+      const released=Array.from(event.changedTouches).some(
+        (touch)=>touch.identifier===this.touchId
+      );
+      if(!released) return;
       this.active=false;
+      this.touchId=null;
       this.targetX=this.baseX;
       this.targetY=this.baseY;
       this.moveX=0;
       this.moveY=0;
-    });
-  }
+    };
+    window.addEventListener("touchend",releaseJoystick);
+    window.addEventListener("touchcancel",releaseJoystick);
+    }
+
 
   resize(){
-    let bottomOffset=40;
-    if(window.innerWidth<700){
-      bottomOffset=100;
-    }
-    const scale=Math.min(window.innerWidth/400,1.4);
-    this.radius=30*scale;
-    const margin=window.innerWidth<700?25:40;
+    const width=window.innerWidth;
+    const bottomOffset=width<700?80:40;
+    this.radius=Math.min(width*0.04,34);
+    const margin=width<700?24:32;
     this.baseX=this.radius+margin;
     this.baseY=window.innerHeight-this.radius-bottomOffset;
     this.knobRadius=this.radius*0.45;
